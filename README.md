@@ -1,7 +1,7 @@
 ## Abstraction
 
 - __model_test__ is the test code for mitum model using mitumjs SDK written in the typescript language.
-- Test code for __token__, __point__, __timestamp__, __nft__, and __credential__ models has been implemented.
+- Test code for __token__, __point__, __timestamp__, __nft__, __credential__, __dao__ and __STO__ models has been implemented.
 - Currently, tests are implemented for local test node, Mitum development node, Minic development node, and hackathon node.
 - The .env file contains the paths of the nodes, the address of the test account, and the private key.
 
