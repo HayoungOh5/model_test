@@ -28,17 +28,15 @@ const mitum = new Mitum(node_url as string); // node_url이 undefined가 아니�
 // Function for STO method
 
 // create STO service
-const createService = async (contractAddress: string, sender: string, granularity: number, controllers: string[], defaultPartition: string, currencyID: string, privatekey: string) => {
+const createService = async (contractAddress: string, sender: string, granularity: number, defaultPartition: string, currencyID: string, privatekey: string) => {
     interface data {
         granularity: number,
         defaultPartition: string,
-        controllers: string []
     }
     
     const stoData: data = {
         granularity: granularity,
         defaultPartition : defaultPartition,
-        controllers: controllers
     };
 
     const createServiceOperation = mitum.sto.createService(contractAddress, sender, stoData, currencyID);
@@ -58,7 +56,7 @@ const setDocument = async (contractAddress: string, sender: string, currencyID: 
 
 // issue token
 const issue = async (contractAddress: string, sender: string, receiver: string, partition:string, currencyID: string, privatekey: string) => {
-    const amount = 30000;
+    const amount = 1000;
     const issueOperation = mitum.sto.issue(contractAddress, sender, receiver, partition, amount, currencyID);
     writeLog("issueOperation\n" + JSON.stringify(issueOperation.toHintedObject()));
     await signAndSend(mitum, privatekey, issueOperation, wait);
@@ -88,7 +86,7 @@ const transferByPartition = async (contractAddress: string, sender: string, hold
 
 // redeem
 const redeem = async (contractAddress: string, sender: string, tokenHolder: string, partition: string, currencyID: string, privatekey: string) => {
-    const amount = 666;
+    const amount = 200;
     const redeemOperation = mitum.sto.redeem(contractAddress, sender, tokenHolder, partition, amount, currencyID);
     writeLog("redeemOperation\n" + JSON.stringify(redeemOperation.toHintedObject()));
     await signAndSend(mitum, privatekey, redeemOperation, wait);
@@ -96,27 +94,56 @@ const redeem = async (contractAddress: string, sender: string, tokenHolder: stri
 
 // Function for STO GET method
 
-// get Point info (check register Point)
-// const getPointInfo = async (contractAddress: string) => {
-//     await mitum.point.getPointInfo(contractAddress).then((res) => {
-//         console.log(res);
-//         writeLog("Point Informtaion\n" + JSON.stringify(res));
-//     })
-// }
+// get STO Service info
+const getServiceInfo = async (contractAddress: string) => {
+    await mitum.sto.getServiceInfo(contractAddress).then((res) => {
+        console.log(res);
+        writeLog("STO service Informtaion\n" + JSON.stringify(res));
+    })
+}
 
-// const getPointBalance = async (contractAddress: string, owner: string) => {
-//     await mitum.point.getPointBalance(contractAddress, owner).then((res) => {
-//         console.log(res);
-//         writeLog(`Point balance of ${owner}\n` + JSON.stringify(res));
-//     })
-// }
+const getPartitionsInfo = async (contractAddress: string, holder: string) => {
+    await mitum.sto.getPartitionsInfo(contractAddress, holder).then((res) => {
+        console.log(res);
+        writeLog(`getPartitionsInfo by holder ${holder}\n` + JSON.stringify(res));
+    })
+}
 
-// const getAllowance = async (contractAddress: string, owner: string, spender: string) => {
-//     await mitum.point.getAllowance(contractAddress, owner, spender).then((res) => {
-//         console.log(res);
-//         writeLog(`Approved Point balance by ${owner}\n` + JSON.stringify(res));
-//     })
-// }
+
+const getBalanceByHolder = async (contractAddress: string, holder: string, partition: string) => {
+    await mitum.sto.getBalanceByHolder(contractAddress, holder, partition).then((res) => {
+        console.log(res);
+        writeLog(`getBalanceByHolder partition ${partition}, ${holder}\n` + JSON.stringify(res));
+    })
+}
+
+const getOperatorsByHolder = async (contractAddress: string, holder: string, partition: string) => {
+    await mitum.sto.getOperatorsByHolder(contractAddress, holder, partition).then((res) => {
+        console.log(res);
+        writeLog(`getOperatorsByHolder partition ${partition}, ${holder}\n` + JSON.stringify(res));
+    })
+}
+
+const getPartitionBalanceInfo = async (contractAddress: string, partition: string) => {
+    await mitum.sto.getPartitionBalanceInfo(contractAddress, partition).then((res) => {
+        console.log(res);
+        writeLog(`getPartitionBalanceInfo ${partition}\n` + JSON.stringify(res));
+    })
+}
+
+const getAuthorizedInfo = async (contractAddress: string, operator: string) => {
+    await mitum.sto.getAuthorizedInfo(contractAddress, operator).then((res) => {
+        console.log(res);
+        writeLog(`getAuthorizedInfo of ${operator}\n` + JSON.stringify(res));
+    })
+}
+
+// updateOperator
+const updateOperator = async (contractAddress: string, sender: string, operators: string[], currencyID: string, privatekey: string) => {
+    const updateOperation = mitum.contract.updateOperator(sender, contractAddress, currencyID, operators);
+    writeLog("updateOperation\n" + JSON.stringify(updateOperation.toHintedObject()));
+    await signAndSend(mitum, privatekey, updateOperation, wait);
+}
 
 // execute
 async function main() {
@@ -127,29 +154,45 @@ async function main() {
 
         const contractAddress = CA1.address;
 
+        // update operator
+        // await updateOperator(contractAddress, test_address, [NA1.address], test_currencyID, test_privatekey);
+
         //create STO service
-        await createService(contractAddress, test_address, 1, [NA1.address], "ABCD", test_currencyID, test_privatekey);
-        await setDocument(contractAddress, NA1.address, test_currencyID, NA1.privatekey);
-        //await setDocument(contractAddress, test_address, test_currencyID, test_privatekey);
+        await createService(contractAddress, test_address, 1, "ABCD", test_currencyID, test_privatekey);
+        await setDocument(contractAddress, test_address, test_currencyID, test_privatekey);
+        await getServiceInfo(contractAddress);
 
         //issue
-        await issue(contractAddress, NA1.address, test_address, "EFGH", test_currencyID, NA1.privatekey);
-        await issue(contractAddress, NA1.address, NA1.address, "EFGH", test_currencyID, NA1.privatekey);
-        await issue(contractAddress, NA1.address, NA2.address, "EFGH", test_currencyID, NA1.privatekey);
+        await issue(contractAddress, test_address, test_address, "EFGH", test_currencyID, test_privatekey);
+        await issue(contractAddress, test_address, test_address, "ABCD", test_currencyID, test_privatekey);
+        await issue(contractAddress, test_address, NA1.address, "ABCD", test_currencyID, test_privatekey);
+        await getServiceInfo(contractAddress);
+        await getPartitionBalanceInfo(contractAddress, "EFGH");
+        await getPartitionBalanceInfo(contractAddress, "ABCD");
 
         //authorizeOperator
-        await authorizeOperator(contractAddress, NA1.address, NA2.address, "EFGH", test_currencyID, NA1.privatekey);
-        await authorizeOperator(contractAddress, NA1.address, test_address, "EFGH", test_currencyID, NA1.privatekey);
-        await issue(contractAddress, NA1.address, NA2.address, "EFGH", test_currencyID, NA1.privatekey);
+        await authorizeOperator(contractAddress, test_address, NA1.address, "ABCD", test_currencyID, test_privatekey);
+        await getOperatorsByHolder(contractAddress, test_address, "ABCD");
+
+        await authorizeOperator(contractAddress, NA1.address, NA2.address, "ABCD", test_currencyID, NA1.privatekey);
+        await getAuthorizedInfo(contractAddress, NA1.address);
+        await getAuthorizedInfo(contractAddress, NA2.address);
 
         // revokeOperator
-        await revokeOperator(contractAddress, test_address, NA2.address, "EFGH", test_currencyID, test_privatekey);
+        await revokeOperator(contractAddress, NA1.address, NA2.address, "ABCD", test_currencyID, NA1.privatekey);
 
         //transferByPartition
-        await transferByPartition(contractAddress, NA1.address, NA2.address, test_address, "EFGH", test_currencyID, NA1.privatekey);
-        //redeem
-        await redeem(contractAddress, NA2.address,  NA2.address, "EFGH", test_currencyID, NA2.privatekey);
-        
+        await transferByPartition(contractAddress, NA1.address, NA1.address, NA2.address, "ABCD", test_currencyID, NA1.privatekey);        
+        await getBalanceByHolder(contractAddress, NA1.address, "ABCD");
+        await getBalanceByHolder(contractAddress, NA2.address, "ABCD");
+        await getBalanceByHolder(contractAddress, test_address, "EFGH");
+
+        // redeem
+        await redeem(contractAddress, test_address, test_address, "EFGH", test_currencyID, test_privatekey);
+        await getServiceInfo(contractAddress);
+        await getBalanceByHolder(contractAddress, test_address, "EFGH");
+        await getPartitionsInfo(contractAddress, test_address);
+        await getPartitionBalanceInfo(contractAddress, "EFGH");
     }
 }
 
